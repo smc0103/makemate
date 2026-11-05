@@ -23,6 +23,7 @@ import QuizPanel from './QuizPanel';
 import { MissionDock, QuizDock, ReverseDock, type MissionStatus, type ReverseStatus } from './GameDocks';
 import { useObjectUrl } from '../hooks/useObjectUrl';
 import { useWakeLock } from '../hooks/useWakeLock';
+import { useFullscreen } from '../hooks/useFullscreen';
 import {
   addChatLog,
   addMissionFind,
@@ -169,7 +170,7 @@ export default function PlaygroundScreen({ character, onBack, onDecorate }: Play
   const peekTimer = useRef<number | null>(null);
   const [typing, setTyping] = useState(() => !isSTTSupported());
   const [draft, setDraft] = useState('');
-  const [fullscreen, setFullscreen] = useState(() => Boolean(document.fullscreenElement));
+  const { active: fullscreen, toggle: toggleScreen } = useFullscreen();
   const [videoUrls, setVideoUrls] = useState<Partial<Record<VideoSlot, string>>>({});
 
   const [missions, setMissions] = useState<Mission[]>(getMissions);
@@ -242,13 +243,6 @@ export default function PlaygroundScreen({ character, onBack, onDecorate }: Play
       cancelled = true;
     };
   }, [character.id]);
-
-  // 전체화면 상태 추적
-  useEffect(() => {
-    const onChange = () => setFullscreen(Boolean(document.fullscreenElement));
-    document.addEventListener('fullscreenchange', onChange);
-    return () => document.removeEventListener('fullscreenchange', onChange);
-  }, []);
 
   /* ---------------- 공통 동작 ---------------- */
 
@@ -1026,17 +1020,12 @@ export default function PlaygroundScreen({ character, onBack, onDecorate }: Play
 
   const toggleFullscreen = async () => {
     playPop();
-    try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await document.documentElement.requestFullscreen();
-    } catch {
-      showNotice('이 기기에서는 전체 화면을 쓸 수 없어요.');
-    }
+    if (!(await toggleScreen())) showNotice('이 기기에서는 전체 화면을 쓸 수 없어요.');
   };
 
+  // 전체 화면은 갤러리로 돌아가도 그대로 둔다 (로비에서 켜고 끌 수 있다)
   const handleBack = () => {
     playPop();
-    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
     onBack();
   };
 

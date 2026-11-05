@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Settings } from 'lucide-react';
+import { Maximize, Minimize, Settings } from 'lucide-react';
+import { useFullscreen } from '../hooks/useFullscreen';
 import SettingsModal from './SettingsModal';
 import {
   CloudDoodle,
@@ -37,6 +38,7 @@ export default function HomeScreen({ onCreate, onGallery }: HomeScreenProps) {
   const [engine, setEngineState] = useState(getEngine);
   const [hasKey, setHasKey] = useState(hasAnyCloudKey);
   const needsKey = engine === 'cloud' && !hasKey;
+  const fullscreen = useFullscreen();
 
   const go = (fn: () => void) => () => {
     unlockAudio();
@@ -58,6 +60,18 @@ export default function HomeScreen({ onCreate, onGallery }: HomeScreenProps) {
       <FootprintDoodle className="pointer-events-none absolute bottom-[8%] right-[6%] w-9 rotate-12 sm:w-12" />
       <CrayonDoodle color="#8ED081" className="pointer-events-none absolute bottom-[3%] left-[26%] hidden w-24 -rotate-6 [@media(min-height:760px)]:block" />
       <CrayonDoodle color="#FF9DB0" className="pointer-events-none absolute bottom-[4%] right-[26%] hidden w-20 rotate-12 [@media(min-height:760px)]:block" />
+
+      {fullscreen.supported && (
+        <button
+          type="button"
+          onClick={go(() => void fullscreen.toggle())}
+          className="glass-btn absolute left-4 top-11 z-10 sm:left-6"
+          aria-label={fullscreen.active ? '전체 화면 끝내기' : '전체 화면'}
+        >
+          {fullscreen.active ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+          <span>{fullscreen.active ? '작게 보기' : '전체 화면'}</span>
+        </button>
+      )}
 
       <button
         type="button"
